@@ -157,14 +157,15 @@ Tab1:Toggle({
 })
 
 -- tab2 elements
-loadstring(game:HttpGet("https://raw.githubusercontent.com/BURSUCo/NEXUS-HUB/refs/heads/main/codes_active.lua"))() 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/BURSUCo/NEXUS-HUB/refs/heads/main/codes_active.lua"))()
 
 Tab2:Button({
-    Title = "redeam all codes",
-    callback = function()
-      local args = {
-	"addtwitter",
-	ActiveCodes
-}
-game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
+    Title = "Redeem all codes",
+    Callback = function()
+        local args = {
+            "addtwitter",
+            ActiveCodes
+        }
+        game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
+    end,
 })
