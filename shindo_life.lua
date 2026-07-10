@@ -157,6 +157,8 @@ Tab1:Toggle({
 })
 
 -- tab2 elements
+local code = require("codes_active")
+
 tab2:button({
     Title = "redeam all codes"
     callback = function()
