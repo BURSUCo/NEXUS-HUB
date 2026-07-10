@@ -157,7 +157,6 @@ Tab1:Toggle({
 })
 
 -- tab2 codes
-
 local ActiveCodes = {
     "ShindoDownAGAIN2x!", "ShindoLifeTakenDown!", "2mLikesC0d3d!", "RELLGIFTsc!",
     "RELLGIFTbag!", "Year5ShindoLife!", "5YearsReleased!", "5YearsOfShindoLife!",
@@ -169,14 +168,13 @@ local ActiveCodes = {
     "beforeWerecord!", "RELLSeasMovie3!", "theWorkloadSeems!", "neverENDING!"
 }
 -- tab2 elements
-
 Tab2:Button({
     Title = "Redeem all codes",
     Callback = function()
-        local args = {
-            "addtwitter",
-            ActiveCodes
-        }
-        game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
+        for _, code in ipairs(ActiveCodes) do
+            local args = { "addtwitter", code }
+            game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
+            task.wait(0.5)
+        end
     end,
 })
