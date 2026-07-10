@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/BURSUCo/NEXUS-HUB/refs/heads/main/shindo_life.lua?token=GHSAT0AAAAAAECJ4RZ4PYU3IM57OJBJUPUM2SQ4I4Q"))() 
+loadstring(game:HttpGet("https://raw.githubusercontent.com/BURSUCo/NEXUS-HUB/refs/heads/main/shindo_life.lua"))() 
