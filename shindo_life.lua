@@ -27,7 +27,7 @@ local Tab1 = Window:Tab({
     Icon = "refresh-ccw-dot",
 })
 
-local Tab2 = Window:tab({
+local Tab2 = Window:Tab({
     Title = "misc",
     Icon = "",
 })
@@ -159,8 +159,8 @@ Tab1:Toggle({
 -- tab2 elements
 local code = require("codes_active")
 
-tab2:button({
-    Title = "redeam all codes"
+Tab2:Button({
+    Title = "redeam all codes",
     callback = function()
       local args = {
 	"addtwitter",
