@@ -162,7 +162,7 @@ tab2:button({
     callback = function()
       local args = {
 	"addtwitter",
-	""
+	ActiveCodes
 }
 game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
 })
