@@ -157,7 +157,7 @@ Tab1:Toggle({
 })
 
 -- tab2 elements
-local code = require("codes_active")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/BURSUCo/NEXUS-HUB/refs/heads/main/codes_active.lua"))() 
 
 Tab2:Button({
     Title = "redeam all codes",
