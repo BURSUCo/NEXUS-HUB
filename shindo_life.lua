@@ -78,7 +78,9 @@ OWNER:Toggle({
     Value = false,
     Callback = function(state)
         if state then
-            local npc = workspace:FindFirstChild("npc1")
+            local npcFolder = workspace:FindFirstChild("npc")
+            local npc = npcFolder and npcFolder:FindFirstChild("npc1")
+
             if not npc then
                 WindUI:Notify({ Title = "Error", Content = "Boss not spawned yet", Duration = 3 })
                 return
