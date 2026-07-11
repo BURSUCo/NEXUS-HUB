@@ -33,14 +33,8 @@ end
 local OWNER = Window:Tab({
     Title = "OWNER",
     Icon = "crown",
-    Locked = true, -- pornește blocat by default, ca fallback sigur
+    Locked = not isOwner(LocalPlayer.UserId), -- blocat automat dacă nu ești în listă
 })
-
-if isOwner(LocalPlayer.UserId) then
-    OWNER:Unlock()
-else
-    OWNER:Lock()
-end
 -- elements OWNER/DEVELOPERS
 
 -- setup distance
