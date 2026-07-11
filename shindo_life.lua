@@ -33,7 +33,7 @@ end
 local OWNER = Window:Tab({
     Title = "OWNER",
     Icon = "crown",
-    Locked = not isOwner(LocalPlayer.UserId), -- blocat automat dacă nu ești în listă
+    Locked = not isOwner(LocalPlayer.UserId),
 })
 -- elements OWNER/DEVELOPERS
 
