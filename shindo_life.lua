@@ -42,6 +42,15 @@ local OWNER = Window:Tab({
 -- elements OWNER/DEVELOPERS
 
 OWNER:Button({
+    Title = "Debug: Find Boss (top-level)",
+    Callback = function()
+        for _, obj in ipairs(workspace:GetChildren()) do
+            print(obj.Name .. " (" .. obj.ClassName .. ")")
+        end
+    end,
+})
+
+OWNER:Button({
     Title = "Debug: Find NPCs",
     Callback = function()
         -- Caută toate obiectele cu Humanoid din workspace (majoritatea NPC-urilor au Humanoid)
