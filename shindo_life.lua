@@ -44,7 +44,7 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Aici pui numele NPC-ului din workspace
-local NPCName = "p1" -- schimbă cu numele exact al NPC-ului
+local NPCName = "part" -- schimbă cu numele exact al NPC-ului
 
 local setupDistance = 5    -- distanța default (studs)
 local setupHeight = 0      -- înălțimea default (studs, + sus / - jos)
