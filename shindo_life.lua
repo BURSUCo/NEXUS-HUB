@@ -41,7 +41,7 @@ local OWNER = Window:Tab({
 })
 -- elements OWNER/DEVELOPERS
 
-Section:Button({
+OWNER:Button({
     Title = "Accept Mission (Nearest)",
     Callback = function()
         local character = LocalPlayer.Character
