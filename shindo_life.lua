@@ -16,9 +16,9 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
-    123456789, -- UserId-ul tău
-    987654321, -- UserId prieten 1
-    111222333, -- UserId prieten 2
+    3213344881, -- OWNER BURSUC
+    987654321, -- UserId DEVELOPER 1
+    111222333, -- UserId DEVELOPER 2
 }
 
 local function isOwner(userId)
