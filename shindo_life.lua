@@ -41,27 +41,6 @@ local OWNER = Window:Tab({
 })
 -- elements OWNER/DEVELOPERS
 
-OWNER:Button({
-    Title = "Debug: Find Boss (top-level)",
-    Callback = function()
-        for _, obj in ipairs(workspace:GetChildren()) do
-            print(obj.Name .. " (" .. obj.ClassName .. ")")
-        end
-    end,
-})
-
-OWNER:Button({
-    Title = "Debug: Find NPCs",
-    Callback = function()
-        -- Caută toate obiectele cu Humanoid din workspace (majoritatea NPC-urilor au Humanoid)
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("Humanoid") then
-                local npcModel = obj.Parent
-                print("NPC găsit: " .. npcModel.Name .. " | Path: " .. npcModel:GetFullName())
-            end
-        end
-    end,
-})
 
 
 -- setup distance
@@ -99,25 +78,7 @@ OWNER:Toggle({
     Value = false,
     Callback = function(state)
         if state then
-            if not selectedBoss then
-                WindUI:Notify({ Title = "Error", Content = "Alege întâi un boss", Duration = 3 })
-                return
-            end
-
-            local missionFolder = workspace:WaitForChild("bossdropmission"):WaitForChild("missions"):FindFirstChild(selectedBoss)
-            if not missionFolder then
-                WindUI:Notify({ Title = "Error", Content = "Mission not found", Duration = 3 })
-                return
-            end
-
-            local npc = nil
-            for _, child in ipairs(missionFolder:GetChildren()) do
-                if child:FindFirstChildOfClass("Humanoid") then
-                    npc = child
-                    break
-                end
-            end
-
+            local npc = workspace:FindFirstChild("npc1")
             if not npc then
                 WindUI:Notify({ Title = "Error", Content = "Boss not spawned yet", Duration = 3 })
                 return
