@@ -12,7 +12,11 @@ local Window = WindUI:CreateWindow({
 
 -- tab OWNER/DEVELOPERS
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+
+-- variabilă globală, folosită atât de OWNER cât și de Tab0 (Farm mission)
+local selectedBoss = nil
 
 -- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
@@ -51,10 +55,35 @@ OWNER:Button({
 })
 
 
-
 -- setup distance
 
+local setupDistance = 5
+local setupHeight = 0
+local setupConnection = nil
 
+OWNER:Input({
+    Title = "Distance",
+    Placeholder = "5",
+    Value = "5",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            setupDistance = num
+        end
+    end,
+})
+
+OWNER:Input({
+    Title = "Height",
+    Placeholder = "0",
+    Value = "0",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            setupHeight = num
+        end
+    end,
+})
 
 OWNER:Toggle({
     Title = "Setup Distance",
@@ -70,7 +99,43 @@ OWNER:Toggle({
             if not missionFolder then
                 WindUI:Notify({ Title = "Error", Content = "Mission not found", Duration = 3 })
                 return
+            end
+
+            local npc = nil
+            for _, child in ipairs(missionFolder:GetChildren()) do
+                if child:FindFirstChildOfClass("Humanoid") then
+                    npc = child
+                    break
+                end
+            end
+
+            if not npc then
+                WindUI:Notify({ Title = "Error", Content = "Boss not spawned yet", Duration = 3 })
+                return
+            end
+
+            local npcRoot = npc:FindFirstChild("HumanoidRootPart")
+            local character = LocalPlayer.Character
+            if not npcRoot or not character or not character:FindFirstChild("HumanoidRootPart") then
+                return
+            end
+            local root = character.HumanoidRootPart
+
+            setupConnection = RunService.RenderStepped:Connect(function()
+                if npc and npc.Parent and root and root.Parent then
+                    local targetPos = npcRoot.Position + Vector3.new(0, setupHeight, -setupDistance)
+                    root.CFrame = CFrame.new(targetPos, npcRoot.Position)
+                end
+            end)
+        else
+            if setupConnection then
+                setupConnection:Disconnect()
+                setupConnection = nil
+            end
         end
+    end,
+})
+
 
 -- tabs
 
@@ -107,7 +172,6 @@ Tab9:Dropdown({
 })
 
 -- tab0 elements
-local selectedBoss = nil
 
 local FarmM = Tab0:Section({
     Title = "Farm mission"
@@ -237,7 +301,7 @@ Tab2:Button({
         for _, code in ipairs(ActiveCodes) do
             local args = { "addtwitter", code }
             game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
-            task.wait(0.5)
+            task.wait(0.01)
         end
     end,
 })
