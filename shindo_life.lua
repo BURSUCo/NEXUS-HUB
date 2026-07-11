@@ -10,12 +10,114 @@ local Window = WindUI:CreateWindow({
     Folder = "MyHubConfig",
 })
 
--- tabs
+-- tab OWNER/DEVELOPERS
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
+local OwnerIds = {
+    123456789, -- UserId-ul tău
+    987654321, -- UserId prieten 1
+    111222333, -- UserId prieten 2
+}
+
+local function isOwner(userId)
+    for _, id in ipairs(OwnerIds) do
+        if id == userId then
+            return true
+        end
+    end
+    return false
+end
+
 local OWNER = Window:Tab({
     Title = "OWNER",
     Icon = "crown",
-    Locked = true,
+    Locked = true, -- pornește blocat by default, ca fallback sigur
 })
+
+if isOwner(LocalPlayer.UserId) then
+    OWNER:Unlock()
+else
+    OWNER:Lock()
+end
+-- elements OWNER/DEVELOPERS
+
+-- setup distance
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Aici pui numele NPC-ului din workspace
+local NPCName = "NumeNPC" -- schimbă cu numele exact al NPC-ului
+
+local setupDistance = 5    -- distanța default (studs)
+local setupHeight = 0      -- înălțimea default (studs, + sus / - jos)
+local setupConnection = nil
+
+OWNER:Input({
+    Title = "Distance",
+    Placeholder = "5",
+    Value = "5",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            setupDistance = num
+        end
+    end,
+})
+
+OWNER:Input({
+    Title = "Height",
+    Placeholder = "0",
+    Value = "0",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num then
+            setupHeight = num
+        end
+    end,
+})
+
+OWNER:Toggle({
+    Title = "Setup Distance",
+    Value = false,
+    Callback = function(state)
+        if state then
+            local npc = workspace:FindFirstChild(NPCName, true)
+            if not npc or not npc:FindFirstChild("HumanoidRootPart") then
+                WindUI:Notify({
+                    Title = "Error",
+                    Content = "NPC not found",
+                    Duration = 3,
+                })
+                return
+            end
+
+            local npcRoot = npc.HumanoidRootPart
+            local character = LocalPlayer.Character
+            if not character or not character:FindFirstChild("HumanoidRootPart") then
+                return
+            end
+            local root = character.HumanoidRootPart
+
+            setupConnection = RunService.RenderStepped:Connect(function()
+                if npc and npc.Parent and root and root.Parent then
+                    local targetPos = npcRoot.Position + Vector3.new(0, setupHeight, -setupDistance)
+                    root.CFrame = CFrame.new(targetPos, npcRoot.Position)
+                end
+            end)
+        else
+            if setupConnection then
+                setupConnection:Disconnect()
+                setupConnection = nil
+            end
+        end
+    end,
+})
+
+-- tabs
 
 local Tab9 = Window:Tab({
     Title = "Settings",
