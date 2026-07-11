@@ -41,39 +41,7 @@ local OWNER = Window:Tab({
 })
 -- elements OWNER/DEVELOPERS
 
-OWNER:Button({
-    Title = "Accept Mission (Nearest)",
-    Callback = function()
-        local character = LocalPlayer.Character
-        if not character or not character:FindFirstChild("HumanoidRootPart") then
-            return
-        end
-        local myPos = character.HumanoidRootPart.Position
 
-        local folder = workspace:WaitForChild("missiongivers")
-        local closest = nil
-        local closestDist = math.huge
-
-        for _, giver in ipairs(folder:GetChildren()) do
-            local root = giver:FindFirstChild("HumanoidRootPart")
-            if root then
-                local dist = (root.Position - myPos).Magnitude
-                if dist < closestDist then
-                    closestDist = dist
-                    closest = giver
-                end
-            end
-        end
-
-        if not closest then
-            WindUI:Notify({ Title = "Error", Content = "No mission giver found nearby", Duration = 3 })
-            return
-        end
-
-        local args = { "accept" }
-        closest:WaitForChild("CLIENTTALK"):FireServer(unpack(args))
-    end,
-})
 
 -- setup distance
 
@@ -191,7 +159,41 @@ Tab9:Dropdown({
 local FarmM = Tab0:Section({
     Title = "Farm mission"
 })
- 
+
+FarmM:Button({
+    Title = "Accept Mission (Nearest)",
+    Callback = function()
+        local character = LocalPlayer.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then
+            return
+        end
+        local myPos = character.HumanoidRootPart.Position
+
+        local folder = workspace:WaitForChild("missiongivers")
+        local closest = nil
+        local closestDist = math.huge
+
+        for _, giver in ipairs(folder:GetChildren()) do
+            local root = giver:FindFirstChild("HumanoidRootPart")
+            if root then
+                local dist = (root.Position - myPos).Magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closest = giver
+                end
+            end
+        end
+
+        if not closest then
+            WindUI:Notify({ Title = "Error", Content = "No mission giver found nearby", Duration = 3 })
+            return
+        end
+
+        local args = { "accept" }
+        closest:WaitForChild("CLIENTTALK"):FireServer(unpack(args))
+    end,
+})
+
 FarmM:Dropdown({ 
     Title = "select boss",
     Values = { 
