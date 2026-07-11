@@ -11,6 +11,12 @@ local Window = WindUI:CreateWindow({
 })
 
 -- tabs
+local OWNER = Window:Tab({
+    Title = "OWNER",
+    Icon = "crown",
+    Locked = true,
+})
+
 local Tab9 = Window:Tab({
     Title = "Settings",
     Icon = "cog",
