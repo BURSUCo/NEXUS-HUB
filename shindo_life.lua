@@ -37,6 +37,19 @@ local OWNER = Window:Tab({
 })
 -- elements OWNER/DEVELOPERS
 
+OWNER:Button({
+    Title = "Debug: Find NPCs",
+    Callback = function()
+        -- Caută toate obiectele cu Humanoid din workspace (majoritatea NPC-urilor au Humanoid)
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Humanoid") then
+                local npcModel = obj.Parent
+                print("NPC găsit: " .. npcModel.Name .. " | Path: " .. npcModel:GetFullName())
+            end
+        end
+    end,
+})
+
 -- setup distance
 
 local Players = game:GetService("Players")
