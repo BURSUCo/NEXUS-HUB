@@ -50,21 +50,7 @@ OWNER:Button({
     end,
 })
 
-OWNER:Toggle({
-    Title = "Setup Distance",
-    Value = false,
-    Callback = function(state)
-        if state then
-            if not selectedBoss then
-                WindUI:Notify({ Title = "Error", Content = "Alege întâi un boss", Duration = 3 })
-                return
-            end
 
-            local missionFolder = workspace:WaitForChild("bossdropmission"):WaitForChild("missions"):FindFirstChild(selectedBoss)
-            if not missionFolder then
-                WindUI:Notify({ Title = "Error", Content = "Mission not found", Duration = 3 })
-                return
-        end
 
 -- setup distance
 
@@ -139,6 +125,22 @@ OWNER:Toggle({
         end
     end,
 })
+
+OWNER:Toggle({
+    Title = "Setup Distance",
+    Value = false,
+    Callback = function(state)
+        if state then
+            if not selectedBoss then
+                WindUI:Notify({ Title = "Error", Content = "Alege întâi un boss", Duration = 3 })
+                return
+            end
+
+            local missionFolder = workspace:WaitForChild("bossdropmission"):WaitForChild("missions"):FindFirstChild(selectedBoss)
+            if not missionFolder then
+                WindUI:Notify({ Title = "Error", Content = "Mission not found", Duration = 3 })
+                return
+        end
 
 -- tabs
 
