@@ -7,7 +7,7 @@ local Window = WindUI:CreateWindow({
     Title = "NexusHUB",
     Icon = "sprout",
     Author = "by Bursuc studio",
-    Folder = "MyHubConfig",
+    Folder = "NexusHUB",
 })
 
 -- tab OWNER/DEVELOPERS
