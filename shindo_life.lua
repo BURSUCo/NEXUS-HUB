@@ -79,7 +79,18 @@ OWNER:Toggle({
     Callback = function(state)
         if state then
             local npcFolder = workspace:FindFirstChild("npc")
-            local npc = npcFolder and npcFolder:FindFirstChild("npc1")
+            if not npcFolder then
+                WindUI:Notify({ Title = "Error", Content = "Boss not spawned yet", Duration = 3 })
+                return
+            end
+
+            local npc = nil
+            for _, child in ipairs(npcFolder:GetChildren()) do
+                if child.Name:match("^npc%d+$") and child:FindFirstChildOfClass("Humanoid") then
+                    npc = child
+                    break
+                end
+            end
 
             if not npc then
                 WindUI:Notify({ Title = "Error", Content = "Boss not spawned yet", Duration = 3 })
