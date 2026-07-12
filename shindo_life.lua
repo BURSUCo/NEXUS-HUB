@@ -1,4 +1,4 @@
-local _version = "1.6.66" -- Corectat "Local" cu "local"
+local _version = "1.6.66"
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. _version .. "/main.lua"))() 
 
 -- shindo life window
