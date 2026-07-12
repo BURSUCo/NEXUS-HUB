@@ -20,6 +20,7 @@ local setupDistance = 5
 local setupHeight = 0
 local setupConnection = nil
 local autoFarmRunning = false
+local questFarmRunning = false
 
 -- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
@@ -45,6 +46,7 @@ local OWNER = Window:Tab({
 
 -- elements OWNER/DEVELOPERS
 
+-- ==================== AUTO FARM (BOSS) ====================
 OWNER:Toggle({
     Title = "Auto Farm",
     Value = false,
@@ -118,8 +120,27 @@ OWNER:Toggle({
                                             startEvent:FireServer("target")
                                         end
                                         task.wait(0.05)
-                                        local questFarmRunning = false
+                                        combatUpdate:FireServer("mouse1", false)
+                                        startEvent:FireServer("target")
+                                    end
 
+                                    task.wait(0.4)
+                                end
+                            end
+                        end
+
+                        task.wait(0.3)
+                    end
+
+                    task.wait(1) -- pauză înainte de misiunea următoare
+                end
+            end)
+        end
+    end,
+})
+
+
+-- ==================== AUTO FARM (QUEST NPC) ====================
 OWNER:Toggle({
     Title = "Auto Farm (Quest NPC)",
     Value = false,
@@ -194,8 +215,8 @@ OWNER:Toggle({
     end,
 })
 
--- setup distance
 
+-- ==================== SETUP DISTANCE ====================
 OWNER:Input({
     Title = "Distance",
     Placeholder = "5",
