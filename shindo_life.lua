@@ -15,9 +15,6 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- variabilă globală, folosită atât de OWNER cât și de Tab0 (Farm mission)
-local selectedBoss = nil
-
 -- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
     3213344881, -- OWNER BURSUC
