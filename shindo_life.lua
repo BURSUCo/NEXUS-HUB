@@ -117,30 +117,19 @@ OWNER:Toggle({
                                     if combatUpdate and startEvent then
                                         combatUpdate:FireServer("mouse1", true)
                                         for j = 1, 5 do
-                                            startEvent:FireServer("target")
-                                        end
-                                        task.wait(0.05)
-                                        combatUpdate:FireServer("mouse1", false)
-                                        startEvent:FireServer("target")
-                                    end
+                                            local questFarmRunning = false
+local selectedQuestType = "oricare"
 
-                                    task.wait(0.4)
-                                end
-                            end
-                        end
-
-                        task.wait(0.3)
-                    end
-
-                    task.wait(1) -- pauză înainte de misiunea următoare
-                end
-            end)
-        end
+OWNER:Dropdown({
+    Title = "Tip misiune (Quest NPC)",
+    Values = {"oricare", "defeat", "envelope", "grocerybag", "weeds", "dirt", "cat", "graffiti"},
+    Value = "oricare",
+    Flag = "QuestType",
+    Callback = function(choice)
+        selectedQuestType = choice
     end,
 })
 
-
--- ==================== AUTO FARM (QUEST NPC) ====================
 OWNER:Toggle({
     Title = "Auto Farm (Quest NPC)",
     Value = false,
@@ -163,20 +152,29 @@ OWNER:Toggle({
                         continue
                     end
 
-                    -- găsește cel mai apropiat NPC eligibil (cu Weld + originalc0/c1)
                     local closest = nil
                     local closestDist = math.huge
 
                     for _, giver in ipairs(folder:GetChildren()) do
-                        local weld = giver:FindFirstChild("Weld")
+                        local talk = giver:FindFirstChild("Talk")
                         local npcRoot = giver:FindFirstChild("HumanoidRootPart")
-                        local hasMissionFiles = weld and weld:FindFirstChild("originalc0") and weld:FindFirstChild("originalc1")
 
-                        if hasMissionFiles and npcRoot then
-                            local dist = (npcRoot.Position - root.Position).Magnitude
-                            if dist < closestDist then
-                                closestDist = dist
-                                closest = giver
+                        if talk and npcRoot then
+                            local talk1 = talk:FindFirstChild("talk1")
+                            local typValue = talk:FindFirstChild("typ")
+
+                            -- eligibil DOAR dacă talk1 are text real (nu e gol)
+                            local hasActiveQuest = talk1 and talk1.Value ~= ""
+
+                            local matchesType = selectedQuestType == "oricare"
+                                or (typValue and typValue.Value == selectedQuestType)
+
+                            if hasActiveQuest and matchesType then
+                                local dist = (npcRoot.Position - root.Position).Magnitude
+                                if dist < closestDist then
+                                    closestDist = dist
+                                    closest = giver
+                                end
                             end
                         end
                     end
@@ -189,7 +187,6 @@ OWNER:Toggle({
                     local npcRoot = closest:FindFirstChild("HumanoidRootPart")
                     local clientTalk = closest:WaitForChild("CLIENTTALK")
 
-                    -- ține-l lipit continuu de NPC, cât timp facem accept-ul (nu cade din cauza gravitației)
                     local pinConnection
                     pinConnection = RunService.RenderStepped:Connect(function()
                         if npcRoot and npcRoot.Parent and root and root.Parent then
@@ -208,13 +205,12 @@ OWNER:Toggle({
                         pinConnection = nil
                     end
 
-                    task.wait(1) -- pauză înainte de a căuta următorul NPC
+                    task.wait(1)
                 end
             end)
         end
     end,
 })
-
 
 -- ==================== SETUP DISTANCE ====================
 OWNER:Input({
@@ -288,6 +284,7 @@ OWNER:Toggle({
 })
 
 -- tabs
+
 local Tab9 = Window:Tab({
     Title = "Settings",
     Icon = "cog",
