@@ -84,8 +84,8 @@ local setupConnection = nil
 
 OWNER:Input({
     Title = "Distance",
-    Placeholder = "5",
-    Value = "5",
+    Placeholder = "-10",
+    Value = "15",
     Callback = function(text)
         local num = tonumber(text)
         if num then
