@@ -41,7 +41,14 @@ local OWNER = Window:Tab({
 })
 -- elements OWNER/DEVELOPERS
 
-
+OWNER:Button({
+    Title = "TEST AUTO FARM",
+    Callback = funcion()
+for i = 1, 4 do
+    mouse1click() 
+    task.wait(0.1)
+end,
+})
 
 -- setup distance
 
