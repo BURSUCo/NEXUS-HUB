@@ -39,42 +39,42 @@ local OWNER = Window:Tab({
 -- elements OWNER/DEVELOPERS
 
 OWNER:Button({
-    Title = "TEST AUTO FARM (Atac Shindo Fixat)",
+    Title = "TEST AUTO FARM (Atac Shindo Timpi Reglați)",
     Callback = function()
         local player = game:GetService("Players").LocalPlayer
-        -- Căutăm caracterul în workspace (ex: Workspace.bursucooo)
         local character = player.Character or workspace:FindFirstChild(player.Name)
         
-        -- Definim locațiile exacte ale remote-urilor bazat pe log
         local combatUpdate = character and character:FindFirstChild("combat") and character.combat:FindFirstChild("update")
         local startEvent = player:FindFirstChild("startevent")
 
         if combatUpdate and startEvent then
             for i = 1, 4 do
-                -- 1. Apăsăm click-ul (mouse1 = true)
+                -- 1. Apăsăm click-ul
                 combatUpdate:FireServer("mouse1", true)
                 
-                -- 2. Trimitem semnalele de target așa cum face jocul
-                startEvent:FireServer("target")
-                startEvent:FireServer("target")
-                startEvent:FireServer("target")
+                -- Spamăm "target" de câteva ori, exact cum arată log-ul tău
+                for j = 1, 5 do
+                    startEvent:FireServer("target")
+                end
                 
-                task.wait(0.1) 
+                -- Lăsăm "click-ul" apăsat o fracțiune de secundă
+                task.wait(0.05) 
                 
-                -- 3. Ridicăm click-ul (mouse1 = false)
+                -- 2. Ridicăm click-ul
                 combatUpdate:FireServer("mouse1", false)
-                
-                -- 4. Mai trimitem câteva semnale de target pe finalul mișcării
                 startEvent:FireServer("target")
                 
-                task.wait(0.15) -- Pauză între pumni
+                -- 3. PAUZA CRITICĂ: Așteptăm 0.4 secunde ca să se termine animația pumnului
+                -- Dacă atacă prea rar, poți scădea la 0.3. Dacă tot dă doar o dată, crește la 0.5.
+                task.wait(0.4) 
             end
-            print("Combo de 4 atacuri complet!")
+            print("Combo de 4 atacuri trimis!")
         else
-            WindUI:Notify({ Title = "Eroare", Content = "Remote-urile de combat nu au fost găsite!", Duration = 3 })
+            WindUI:Notify({ Title = "Eroare", Content = "Remote-urile nu au fost găsite!", Duration = 3 })
         end
     end,
 })
+
 
 
 -- setup distance
