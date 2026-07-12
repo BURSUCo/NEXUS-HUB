@@ -118,25 +118,81 @@ OWNER:Toggle({
                                             startEvent:FireServer("target")
                                         end
                                         task.wait(0.05)
-                                        combatUpdate:FireServer("mouse1", false)
-                                        startEvent:FireServer("target")
-                                    end
+                                        local questFarmRunning = false
 
-                                    task.wait(0.4)
-                                end
-                            end
-                        end
+OWNER:Toggle({
+    Title = "Auto Farm (Quest NPC)",
+    Value = false,
+    Callback = function(state)
+        questFarmRunning = state
 
-                        task.wait(0.3)
+        if state then
+            task.spawn(function()
+                while questFarmRunning do
+                    local character = LocalPlayer.Character
+                    local root = character and character:FindFirstChild("HumanoidRootPart")
+                    if not root then
+                        task.wait(1)
+                        continue
                     end
 
-                    task.wait(1) -- pauză înainte de misiunea următoare
+                    local folder = workspace:FindFirstChild("missiongivers")
+                    if not folder then
+                        task.wait(1)
+                        continue
+                    end
+
+                    -- găsește cel mai apropiat NPC eligibil (cu Weld + originalc0/c1)
+                    local closest = nil
+                    local closestDist = math.huge
+
+                    for _, giver in ipairs(folder:GetChildren()) do
+                        local weld = giver:FindFirstChild("Weld")
+                        local npcRoot = giver:FindFirstChild("HumanoidRootPart")
+                        local hasMissionFiles = weld and weld:FindFirstChild("originalc0") and weld:FindFirstChild("originalc1")
+
+                        if hasMissionFiles and npcRoot then
+                            local dist = (npcRoot.Position - root.Position).Magnitude
+                            if dist < closestDist then
+                                closestDist = dist
+                                closest = giver
+                            end
+                        end
+                    end
+
+                    if not closest then
+                        task.wait(1)
+                        continue
+                    end
+
+                    local npcRoot = closest:FindFirstChild("HumanoidRootPart")
+                    local clientTalk = closest:WaitForChild("CLIENTTALK")
+
+                    -- ține-l lipit continuu de NPC, cât timp facem accept-ul (nu cade din cauza gravitației)
+                    local pinConnection
+                    pinConnection = RunService.RenderStepped:Connect(function()
+                        if npcRoot and npcRoot.Parent and root and root.Parent then
+                            root.CFrame = npcRoot.CFrame * CFrame.new(0, 0, 3)
+                        end
+                    end)
+
+                    task.wait(0.3)
+                    clientTalk:FireServer()
+                    task.wait(0.5)
+                    clientTalk:FireServer("accept")
+                    task.wait(0.5)
+
+                    if pinConnection then
+                        pinConnection:Disconnect()
+                        pinConnection = nil
+                    end
+
+                    task.wait(1) -- pauză înainte de a căuta următorul NPC
                 end
             end)
         end
     end,
 })
-
 
 -- setup distance
 
