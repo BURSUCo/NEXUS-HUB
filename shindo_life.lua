@@ -38,35 +38,99 @@ local OWNER = Window:Tab({
 
 -- elements OWNER/DEVELOPERS
 
-OWNER:Button({
-    Title = "TEST AUTO FARM (Atac Shindo Timpi Reglați)",
-    Callback = function()
-        local player = game:GetService("Players").LocalPlayer
-        local character = player.Character or workspace:FindFirstChild(player.Name)
-        
-        local combatUpdate = character and character:FindFirstChild("combat") and character.combat:FindFirstChild("update")
-        local startEvent = player:FindFirstChild("startevent")
+local autoFarmRunning = false
 
-        if combatUpdate and startEvent then
-            for i = 1, 4 do
-                -- 1. Apăsăm click-ul
-                combatUpdate:FireServer("mouse1", true)
-                
-                -- Spamăm "target" de câteva ori, exact cum arată log-ul tău
-                for j = 1, 5 do
-                    startEvent:FireServer("target")
+OWNER:Toggle({
+    Title = "Auto Farm",
+    Value = false,
+    Callback = function(state)
+        autoFarmRunning = state
+
+        if state then
+            task.spawn(function()
+                while autoFarmRunning do
+                    -- PAS 1: Acceptă misiunea (dacă e selectat un boss)
+                    if selectedBoss then
+                        pcall(function()
+                            local args = {
+                                game:GetService("Players"):WaitForChild("Bossdebossperoblox")
+                            }
+                            workspace:WaitForChild("bossdropmission")
+                                :WaitForChild("missions")
+                                :WaitForChild(selectedBoss)
+                                :WaitForChild("missiongiver")
+                                :WaitForChild("CLIENTTALK")
+                                :FireServer(unpack(args))
+                        end)
+                    end
+
+                    task.wait(2) -- timp pentru spawn
+
+                    -- PAS 2: cât timp mai există orice NPC (npc+număr) viu, omoară-i pe rând
+                    local anyFound = true
+                    while autoFarmRunning and anyFound do
+                        anyFound = false
+
+                        local npcFolder = workspace:FindFirstChild("npc")
+                        if npcFolder then
+                            local character = LocalPlayer.Character
+                            local root = character and character:FindFirstChild("HumanoidRootPart")
+
+                            -- găsește cel mai apropiat NPC viu
+                            local target = nil
+                            local targetDist = math.huge
+
+                            for _, child in ipairs(npcFolder:GetChildren()) do
+                                if child.Name:match("^npc%d+$") then
+                                    local hum = child:FindFirstChildOfClass("Humanoid")
+                                    local npcRoot = child:FindFirstChild("HumanoidRootPart")
+                                    if hum and hum.Health > 0 and npcRoot and root then
+                                        anyFound = true
+                                        local dist = (npcRoot.Position - root.Position).Magnitude
+                                        if dist < targetDist then
+                                            targetDist = dist
+                                            target = child
+                                        end
+                                    end
+                                end
+                            end
+
+                            if target and root then
+                                local npcRoot = target:FindFirstChild("HumanoidRootPart")
+                                local humanoid = target:FindFirstChildOfClass("Humanoid")
+
+                                -- atacă acest target până moare sau nu mai e valid
+                                while autoFarmRunning and target.Parent and humanoid.Health > 0 do
+                                    local targetPos = npcRoot.Position + Vector3.new(0, setupHeight, -setupDistance)
+                                    root.CFrame = CFrame.new(targetPos, npcRoot.Position)
+
+                                    local combatUpdate = character:FindFirstChild("combat") and character.combat:FindFirstChild("update")
+                                    local startEvent = LocalPlayer:FindFirstChild("startevent")
+
+                                    if combatUpdate and startEvent then
+                                        combatUpdate:FireServer("mouse1", true)
+                                        for j = 1, 5 do
+                                            startEvent:FireServer("target")
+                                        end
+                                        task.wait(0.05)
+                                        combatUpdate:FireServer("mouse1", false)
+                                        startEvent:FireServer("target")
+                                    end
+
+                                    task.wait(0.4)
+                                end
+                            end
+                        end
+
+                        task.wait(0.3)
+                    end
+
+                    task.wait(1) -- pauză înainte de misiunea următoare
                 end
-                
-                -- Lăsăm "click-ul" apăsat o fracțiune de secundă
-                task.wait(0.05) 
-                
-                -- 2. Ridicăm click-ul
-                combatUpdate:FireServer("mouse1", false)
-                startEvent:FireServer("target")
-                
-                -- 3. PAUZA CRITICĂ: Așteptăm 0.4 secunde ca să se termine animația pumnului
-                -- Dacă atacă prea rar, poți scădea la 0.3. Dacă tot dă doar o dată, crește la 0.5.
-                task.wait(0.4) 
+            end)
+        end
+    end,
+})
             end
             print("Combo de 4 atacuri trimis!")
         else
