@@ -13,7 +13,7 @@ local Window = WindUI:CreateWindow({
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Pune aici UserId-urile celor cărora vrei să le dai acces
+-- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
     3213344881, -- OWNER BURSUC
     11188345834, -- UserId DEVELOPER 1
@@ -39,7 +39,7 @@ local OWNER = Window:Tab({
 OWNER:Button({
     Title = "Attack x4",
     Callback = function()
-        local update = LocalPlayer:WaitForChild("update")
+        local update = game:GetService("Players").LocalPlayer:WaitForChild("update")
 
         for i = 1, 4 do
             update:FireServer("mouse1", true)
@@ -52,7 +52,7 @@ OWNER:Button({
     end,
 })
 
--- DECLARĂM selectedBoss SUS ca să fie global pentru tab-uri
+-- DECLARĂM selectedBoss AICI SUS ca să poată fi folosit și de Setup Distance și de Farm
 local selectedBoss = nil
 
 -- setup distance
@@ -71,16 +71,30 @@ OWNER:Toggle({
                 WindUI:Notify({ Title = "Error", Content = "Mission not found", Duration = 3 })
                 return
             end
-            -- Notă: Aici poți adăuga logica de teleportare la boss dacă dorești
         end
-    end 
-}) 
+    end -- AICI LIPSEAU ACESTE ÎNCHIDERI
+}) -- ȘI PARANTEZA ASTA
 
 -- tabs
-local Tab9 = Window:Tab({ Title = "Settings", Icon = "cog" })
-local Tab0 = Window:Tab({ Title = "main", Icon = "house" })
-local Tab1 = Window:Tab({ Title = "spins", Icon = "refresh-ccw-dot" })
-local Tab2 = Window:Tab({ Title = "misc", Icon = "" })
+local Tab9 = Window:Tab({
+    Title = "Settings",
+    Icon = "cog",
+})
+
+local Tab0 = Window:Tab({
+    Title = "main",
+    Icon = "house",
+})
+
+local Tab1 = Window:Tab({
+    Title = "spins",
+    Icon = "refresh-ccw-dot",
+})
+
+local Tab2 = Window:Tab({
+    Title = "misc",
+    Icon = "",
+})
 
 -- tab9 elements
 Tab9:Dropdown({
@@ -110,38 +124,22 @@ FarmM:Dropdown({
     end,
 })
 
-getgenv().StartFarm = false
 FarmM:Toggle({ 
     Title = "Start Farm",
-    Value = false,
-    Callback = function(state)
-        getgenv().StartFarm = state
-        
-        if state then
-            task.spawn(function()
-                while getgenv().StartFarm do
-                    if not selectedBoss or selectedBoss == "select boss" then
-                        WindUI:Notify({ Title = "Error", Content = "Alege întâi un boss valid!", Duration = 3 })
-                        break
-                    end
-
-                    -- Corectat: Trimitem LocalPlayer în loc de string-ul blocat anterior
-                    local args = { LocalPlayer }
-                    
-                    local missionGiver = workspace:WaitForChild("bossdropmission")
-                        :WaitForChild("missions")
-                        :FindFirstChild(selectedBoss)
-                        
-                    if missionGiver then
-                        missionGiver:WaitForChild("missiongiver")
-                                    :WaitForChild("CLIENTTALK")
-                                    :FireServer(unpack(args))
-                    end
-                    
-                    task.wait(5) -- Așteaptă 5 secunde înainte de a verifica/lua misiunea din nou
-                end
-            end)
+    Callback = function()
+        if not selectedBoss then
+            return
         end
+
+        local args = {           
+            game:GetService("Players"):WaitForChild("Bossdebossperoblox")
+        }
+        workspace:WaitForChild("bossdropmission")
+            :WaitForChild("missions")
+            :WaitForChild(selectedBoss)
+            :WaitForChild("missiongiver")
+            :WaitForChild("CLIENTTALK")
+            :FireServer(unpack(args))
     end,
 })
 
@@ -149,14 +147,14 @@ FarmM:Toggle({
 getgenv().BloodlineSpin = false
 getgenv().ElementSpin = false
 
-local selectedKGs = {}
-local selectedElements = {}
+local selectedKGs = {"kg1"}
+local selectedElements = {"element1"}
 
 -- Dropdown Multi pentru Bloodline
 Tab1:Dropdown({
     Title = "Alege Bloodline(uri)",
     Values = {"kg1", "kg2", "kg3", "kg4"},
-    Value = {},
+    Value = {"kg1"},
     Multi = true,
     Flag = "SelectedKGs",
     Callback = function(choices)
@@ -174,15 +172,12 @@ Tab1:Toggle({
         if state then
             task.spawn(function()
                 while getgenv().BloodlineSpin do
-                    -- Schimbat în pairs() pentru tabele de tip Multi-Dropdown
-                    for kg, enabled in pairs(selectedKGs) do
+                    for _, kg in ipairs(selectedKGs) do
                         if not getgenv().BloodlineSpin then break end
-                        if enabled then
-                            LocalPlayer:WaitForChild("startevent"):FireServer("spin", kg)
-                            task.wait(0.6)
-                        end
+                        game.Players.LocalPlayer.startevent:FireServer("spin", kg)
+                        task.wait(0.5)
                     end
-                    task.wait(1)
+                    task.wait(1.5)
                 end
             end)
         end
@@ -193,7 +188,7 @@ Tab1:Toggle({
 Tab1:Dropdown({
     Title = "Alege Element(e)",
     Values = {"element1", "element2", "element3", "element4"},
-    Value = {},
+    Value = {"element1"},
     Multi = true,
     Flag = "SelectedElements",
     Callback = function(choices)
@@ -211,14 +206,12 @@ Tab1:Toggle({
         if state then
             task.spawn(function()
                 while getgenv().ElementSpin do
-                    for elem, enabled in pairs(selectedElements) do
+                    for _, elem in ipairs(selectedElements) do
                         if not getgenv().ElementSpin then break end
-                        if enabled then
-                            LocalPlayer:WaitForChild("startevent"):FireServer("spin", elem)
-                            task.wait(0.6)
-                        end
+                        game.Players.LocalPlayer.startevent:FireServer("spin", elem)
+                        task.wait(0.5)
                     end
-                    task.wait(1)
+                    task.wait(1.5)
                 end
             end)
         end
@@ -243,9 +236,8 @@ Tab2:Button({
     Callback = function()
         for _, code in ipairs(ActiveCodes) do
             local args = { "addtwitter", code }
-            LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
-            task.wait(0.15) -- Adăugat un mic delay ca să nu sară peste coduri din cauza rate-limit-ului jocului
+            game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
+            task.wait(0.01)
         end
-        WindUI:Notify({ Title = "Codes", Content = "Toate codurile au fost trimise!", Duration = 3 })
     end,
 })
