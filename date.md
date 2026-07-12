@@ -53,3 +53,19 @@ local args = {
 	game:GetService("Players"):WaitForChild("Bossdebossperoblox")
 }
 workspace:WaitForChild("bossdropmission"):WaitForChild("missions"):WaitForChild("Raion Akuma"):WaitForChild("missiongiver"):WaitForChild("CLIENTTALK"):FireServer(unpack(args))
+
+
+server create/join:
+
+local args = {
+	"rpgteleport",
+	4601350214
+}
+game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
+
+
+local args = {
+	"play"
+}
+game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
+
