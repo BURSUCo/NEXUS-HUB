@@ -17,7 +17,7 @@ local LocalPlayer = Players.LocalPlayer
 -- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
     3213344881, -- OWNER BURSUC
-    987654321, -- UserId DEVELOPER 1
+    11188345834, -- UserId DEVELOPER 1
     111222333, -- UserId DEVELOPER 2
 }
 
