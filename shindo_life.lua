@@ -14,6 +14,13 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
+-- variabile globale, declarate SUS, folosite de OWNER și de celelalte tab-uri
+local selectedBoss = nil
+local setupDistance = 5
+local setupHeight = 0
+local setupConnection = nil
+local autoFarmRunning = false
+
 -- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
     3213344881, -- OWNER BURSUC
@@ -38,8 +45,6 @@ local OWNER = Window:Tab({
 
 -- elements OWNER/DEVELOPERS
 
-local autoFarmRunning = false
-
 OWNER:Toggle({
     Title = "Auto Farm",
     Value = false,
@@ -52,15 +57,15 @@ OWNER:Toggle({
                     -- PAS 1: Acceptă misiunea (dacă e selectat un boss)
                     if selectedBoss then
                         pcall(function()
-                            local args = {
-                                game:GetService("Players"):WaitForChild("Bossdebossperoblox")
-                            }
-                            workspace:WaitForChild("bossdropmission")
-                                :WaitForChild("missions")
-                                :WaitForChild(selectedBoss)
-                                :WaitForChild("missiongiver")
-                                :WaitForChild("CLIENTTALK")
-                                :FireServer(unpack(args))
+                            local missionFolder = workspace:FindFirstChild("bossdropmission")
+                            if missionFolder then
+                                local args = { LocalPlayer }
+                                missionFolder:WaitForChild("missions")
+                                    :WaitForChild(selectedBoss)
+                                    :WaitForChild("missiongiver")
+                                    :WaitForChild("CLIENTTALK")
+                                    :FireServer(unpack(args))
+                            end
                         end)
                     end
 
@@ -131,20 +136,9 @@ OWNER:Toggle({
         end
     end,
 })
-            end
-            print("Combo de 4 atacuri trimis!")
-        else
-            WindUI:Notify({ Title = "Eroare", Content = "Remote-urile nu au fost găsite!", Duration = 3 })
-        end
-    end,
-})
-
 
 
 -- setup distance
-local setupDistance = 5
-local setupHeight = 0
-local setupConnection = nil
 
 OWNER:Input({
     Title = "Distance",
@@ -249,7 +243,6 @@ Tab9:Dropdown({
 })
 
 -- tab0 elements
-local selectedBoss = nil -- Declarată variabila pentru a evita erorile
 
 local FarmM = Tab0:Section({
     Title = "Farm mission"
@@ -275,9 +268,7 @@ FarmM:Toggle({
             return
         end
 
-        local args = {           
-            game:GetService("Players").LocalPlayer -- Am schimbat din "Bossdebossperoblox" în LocalPlayer
-        }
+        local args = { LocalPlayer }
         
         local missionFolder = workspace:FindFirstChild("bossdropmission")
         if missionFolder then
