@@ -39,14 +39,43 @@ local OWNER = Window:Tab({
 -- elements OWNER/DEVELOPERS
 
 OWNER:Button({
-    Title = "TEST AUTO FARM",
-    Callback = function() -- Corectat "funcion" în "function"
-        for i = 1, 4 do
-            mouse1click() 
-            task.wait(0.1)
+    Title = "TEST AUTO FARM (Atac Shindo Fixat)",
+    Callback = function()
+        local player = game:GetService("Players").LocalPlayer
+        -- Căutăm caracterul în workspace (ex: Workspace.bursucooo)
+        local character = player.Character or workspace:FindFirstChild(player.Name)
+        
+        -- Definim locațiile exacte ale remote-urilor bazat pe log
+        local combatUpdate = character and character:FindFirstChild("combat") and character.combat:FindFirstChild("update")
+        local startEvent = player:FindFirstChild("startevent")
+
+        if combatUpdate and startEvent then
+            for i = 1, 4 do
+                -- 1. Apăsăm click-ul (mouse1 = true)
+                combatUpdate:FireServer("mouse1", true)
+                
+                -- 2. Trimitem semnalele de target așa cum face jocul
+                startEvent:FireServer("target")
+                startEvent:FireServer("target")
+                startEvent:FireServer("target")
+                
+                task.wait(0.1) 
+                
+                -- 3. Ridicăm click-ul (mouse1 = false)
+                combatUpdate:FireServer("mouse1", false)
+                
+                -- 4. Mai trimitem câteva semnale de target pe finalul mișcării
+                startEvent:FireServer("target")
+                
+                task.wait(0.15) -- Pauză între pumni
+            end
+            print("Combo de 4 atacuri complet!")
+        else
+            WindUI:Notify({ Title = "Eroare", Content = "Remote-urile de combat nu au fost găsite!", Duration = 3 })
         end
-    end, -- Adăugat end-ul care lipsea pentru a închide funcția
+    end,
 })
+
 
 -- setup distance
 local setupDistance = 5
