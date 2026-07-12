@@ -1,6 +1,5 @@
-local _version = "1.6.66"
+local _version = "1.6.66" -- Corectat "Local" cu "local"
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. _version .. "/main.lua"))() 
-
 
 -- shindo life window
 local Window = WindUI:CreateWindow({
@@ -36,19 +35,20 @@ local OWNER = Window:Tab({
     Icon = "crown",
     Locked = not isOwner(LocalPlayer.UserId),
 })
+
 -- elements OWNER/DEVELOPERS
 
 OWNER:Button({
     Title = "TEST AUTO FARM",
-    Callback = funcion()
-for i = 1, 4 do
-    mouse1click() 
-    task.wait(0.1)
-end,
+    Callback = function() -- Corectat "funcion" în "function"
+        for i = 1, 4 do
+            mouse1click() 
+            task.wait(0.1)
+        end
+    end, -- Adăugat end-ul care lipsea pentru a închide funcția
 })
 
 -- setup distance
-
 local setupDistance = 5
 local setupHeight = 0
 local setupConnection = nil
@@ -123,9 +123,7 @@ OWNER:Toggle({
     end,
 })
 
-
 -- tabs
-
 local Tab9 = Window:Tab({
     Title = "Settings",
     Icon = "cog",
@@ -135,7 +133,6 @@ local Tab0 = Window:Tab({
     Title = "main",
     Icon = "house",
 })
-
 
 local Tab1 = Window:Tab({
     Title = "spins",
@@ -159,6 +156,7 @@ Tab9:Dropdown({
 })
 
 -- tab0 elements
+local selectedBoss = nil -- Declarată variabila pentru a evita erorile
 
 local FarmM = Tab0:Section({
     Title = "Farm mission"
@@ -174,27 +172,30 @@ FarmM:Dropdown({
     Callback = function(choice)
         selectedBoss = choice
     end,
-    
-  })
+})
+
 FarmM:Toggle({ 
     Title = "Start Farm",
     Callback = function()
         if not selectedBoss then
+            WindUI:Notify({ Title = "Error", Content = "Select a boss first!", Duration = 3 })
             return
         end
 
         local args = {           
-        game:GetService("Players"):WaitForChild("Bossdebossperoblox")
+            game:GetService("Players").LocalPlayer -- Am schimbat din "Bossdebossperoblox" în LocalPlayer
         }
-        workspace:WaitForChild("bossdropmission")
-            :WaitForChild("missions")
-            :WaitForChild(selectedBoss)
-            :WaitForChild("missiongiver")
-            :WaitForChild("CLIENTTALK")
-            :FireServer(unpack(args))
+        
+        local missionFolder = workspace:FindFirstChild("bossdropmission")
+        if missionFolder then
+            missionFolder:WaitForChild("missions")
+                :WaitForChild(selectedBoss)
+                :WaitForChild("missiongiver")
+                :WaitForChild("CLIENTTALK")
+                :FireServer(unpack(args))
+        end
     end,
 })
-
 
 -- tab1 elements
 getgenv().BloodlineSpin = false
@@ -202,6 +203,7 @@ getgenv().ElementSpin = false
 
 local selectedKGs = {"kg1"}
 local selectedElements = {"element1"}
+
 -- Dropdown Multi pentru Bloodline
 Tab1:Dropdown({
     Title = "Alege Bloodline(uri)",
@@ -281,6 +283,7 @@ local ActiveCodes = {
     "WePerfectedRELLSeas!", "forTheFuture!", "ofOurGames!", "WeGotaLotofTestingtoDo!",
     "beforeWerecord!", "RELLSeasMovie3!", "theWorkloadSeems!", "neverENDING!"
 }
+
 -- tab2 elements
 Tab2:Button({
     Title = "Redeem all codes",
