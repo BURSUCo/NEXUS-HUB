@@ -251,6 +251,110 @@ function Lib.AcceptNearestQuest(questType)
 end
 
 -- ============================================================
+-- SIDE MISSIONS (graffiti, dirt, weeds, cat, groceries, deliver, etc.)
+-- ============================================================
+
+-- Caută misiunea activă curentă din workspace.missiontypes.currentmissions
+-- (prima găsită cu text ~= "")
+-- Întoarce: instanța misiunii, sau nil dacă nu există niciuna activă
+function Lib.FindActiveSideMission()
+    local missionTypes = workspace:FindFirstChild("missiontypes")
+    if not missionTypes then
+        return nil
+    end
+
+    local current = missionTypes:FindFirstChild("currentmissions")
+    if not current then
+        return nil
+    end
+
+    for _, mission in ipairs(current:GetChildren()) do
+        local textVal = mission:FindFirstChild("text")
+        if textVal and textVal.Value ~= "" then
+            return mission
+        end
+    end
+
+    return nil
+end
+
+-- Rezolvă complet o misiune secundară (side-mission):
+-- teleportează la punctul misiunii, apoi dă click pe cel mai apropiat ClickDetector
+-- până se completează (complete == true) sau expiră timpul (maxTime secunde)
+function Lib.CompleteSideMission(missionInstance, maxTime)
+    maxTime = maxTime or 15
+
+    local pointVal = missionInstance:FindFirstChild("point")
+    local completeVal = missionInstance:FindFirstChild("complete")
+
+    if not pointVal then
+        return false
+    end
+
+    local character = LocalPlayer.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then
+        return false
+    end
+
+    -- teleport la punctul misiunii
+    root.CFrame = pointVal.Value + Vector3.new(0, 3, 0)
+    task.wait(0.5)
+
+    -- caută cel mai apropiat ClickDetector
+    local closestDetector = nil
+    local closestDist = math.huge
+
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ClickDetector") then
+            local part = obj.Parent
+            if part and part:IsA("BasePart") then
+                local dist = (part.Position - root.Position).Magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closestDetector = obj
+                end
+            end
+        end
+    end
+
+    if not closestDetector then
+        return false
+    end
+
+    local startTime = tick()
+    while tick() - startTime < maxTime do
+        fireclickdetector(closestDetector)
+        task.wait(0.3)
+
+        if completeVal and completeVal.Value == true then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- Auto Farm complet pentru side-missions: acceptă quest de la NPC apropiat,
+-- găsește misiunea activă, o completează, repetă — cât timp runningFlagFn() e true
+function Lib.AutoFarmSideMissions(questType, runningFlagFn)
+    while runningFlagFn() do
+        local accepted = Lib.AcceptNearestQuest(questType)
+
+        if accepted then
+            task.wait(1) -- timp ca misiunea să apară în currentmissions
+
+            local mission = Lib.FindActiveSideMission()
+            if mission then
+                Lib.CompleteSideMission(mission, 15)
+            end
+        end
+
+        task.wait(1)
+    end
+end
+
+-- ============================================================
 -- CODES (redeem)
 -- ============================================================
 
