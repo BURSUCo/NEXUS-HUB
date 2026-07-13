@@ -188,20 +188,22 @@ end
 -- și opțional filtrat după tip (questType = "oricare" sau "defeat"/"envelope"/etc)
 -- Trimite secvența completă de accept (FireServer() apoi FireServer("accept"))
 -- ținând personajul lipit de NPC în timpul secvenței (ca să nu rateze din cauza mișcării NPC-ului)
+-- Întoarce: success (bool), acceptedType (string sau nil) - tipul exact acceptat ("defeat","graffiti", etc)
 function Lib.AcceptNearestQuest(questType)
     local character = LocalPlayer.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
     if not root then
-        return false
+        return false, nil
     end
 
     local folder = workspace:FindFirstChild("missiongivers")
     if not folder then
-        return false
+        return false, nil
     end
 
     local closest = nil
     local closestDist = math.huge
+    local closestType = nil
 
     for _, giver in ipairs(folder:GetChildren()) do
         local talk = giver:FindFirstChild("Talk")
@@ -218,13 +220,14 @@ function Lib.AcceptNearestQuest(questType)
                 if dist < closestDist then
                     closestDist = dist
                     closest = giver
+                    closestType = typValue and typValue.Value or nil
                 end
             end
         end
     end
 
     if not closest then
-        return false
+        return false, nil
     end
 
     local npcRoot = closest:FindFirstChild("HumanoidRootPart")
@@ -247,7 +250,95 @@ function Lib.AcceptNearestQuest(questType)
         pinConnection:Disconnect()
     end
 
-    return true
+    return true, closestType
+end
+
+-- Rezolvă o misiune care necesită DOAR teleport (cat, envelope, grocerybag)
+-- teleportează la punctul misiunii și așteaptă să se completeze automat (fără click)
+function Lib.CompleteTeleportOnlyMission(missionInstance, maxTime)
+    maxTime = maxTime or 15
+
+    local pointVal = missionInstance:FindFirstChild("point")
+    local completeVal = missionInstance:FindFirstChild("complete")
+
+    if not pointVal then
+        return false
+    end
+
+    local character = LocalPlayer.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then
+        return false
+    end
+
+    root.CFrame = pointVal.Value + Vector3.new(0, 3, 0)
+
+    local startTime = tick()
+    while tick() - startTime < maxTime do
+        task.wait(0.3)
+        if completeVal and completeVal.Value == true then
+            return true
+        end
+    end
+
+    return false
+end
+
+-- Tipurile care necesită click + teleport (curățenie/interacțiune fizică)
+local CLICK_TYPES = {
+    graffiti = true,
+    dirt = true,
+    weeds = true,
+}
+
+-- Tipurile care necesită DOAR teleport (culegere/livrare automată la apropiere)
+local TELEPORT_ONLY_TYPES = {
+    cat = true,
+    envelope = true,
+    grocerybag = true,
+}
+
+-- Auto Farm UNIVERSAL: acceptă orice quest eligibil (după questType, sau "oricare"),
+-- detectează automat categoria (defeat / click+teleport / doar teleport) și acționează corespunzător.
+-- clickPause: pauza între click-uri (secunde) pentru misiunile de tip graffiti/dirt/weeds
+function Lib.AutoFarmAnyQuest(questType, setupDistance, setupHeight, clickPause, runningFlagFn)
+    clickPause = clickPause or 0.3
+
+    while runningFlagFn() do
+        local accepted, acceptedType = Lib.AcceptNearestQuest(questType)
+
+        if accepted then
+            task.wait(1.5) -- timp ca misiunea/mob-ul să apară
+
+            if acceptedType == "defeat" then
+                -- luptă: găsește mob-urile spawnate și omoară-le
+                Lib.KillAllMobs(setupDistance, setupHeight, runningFlagFn)
+
+            elseif acceptedType and CLICK_TYPES[acceptedType] then
+                -- click + teleport (graffiti, dirt, weeds)
+                local mission = Lib.FindActiveSideMission()
+                if mission then
+                    Lib.CompleteSideMissionWithPause(mission, 20, clickPause)
+                end
+
+            elseif acceptedType and TELEPORT_ONLY_TYPES[acceptedType] then
+                -- doar teleport (cat, envelope, grocerybag)
+                local mission = Lib.FindActiveSideMission()
+                if mission then
+                    Lib.CompleteTeleportOnlyMission(mission, 15)
+                end
+
+            else
+                -- tip necunoscut: încearcă întâi ca side-mission generică (click), fallback sigur
+                local mission = Lib.FindActiveSideMission()
+                if mission then
+                    Lib.CompleteSideMissionWithPause(mission, 20, clickPause)
+                end
+            end
+        end
+
+        task.wait(1)
+    end
 end
 
 -- ============================================================
@@ -281,8 +372,10 @@ end
 -- Rezolvă complet o misiune secundară (side-mission):
 -- teleportează la punctul misiunii, apoi dă click pe cel mai apropiat ClickDetector
 -- până se completează (complete == true) sau expiră timpul (maxTime secunde)
-function Lib.CompleteSideMission(missionInstance, maxTime)
+-- clickPause: pauza între click-uri (implicit 0.3s)
+function Lib.CompleteSideMissionWithPause(missionInstance, maxTime, clickPause)
     maxTime = maxTime or 15
+    clickPause = clickPause or 0.3
 
     local pointVal = missionInstance:FindFirstChild("point")
     local completeVal = missionInstance:FindFirstChild("complete")
@@ -325,7 +418,7 @@ function Lib.CompleteSideMission(missionInstance, maxTime)
     local startTime = tick()
     while tick() - startTime < maxTime do
         fireclickdetector(closestDetector)
-        task.wait(0.3)
+        task.wait(clickPause)
 
         if completeVal and completeVal.Value == true then
             return true
@@ -335,23 +428,9 @@ function Lib.CompleteSideMission(missionInstance, maxTime)
     return false
 end
 
--- Auto Farm complet pentru side-missions: acceptă quest de la NPC apropiat,
--- găsește misiunea activă, o completează, repetă — cât timp runningFlagFn() e true
-function Lib.AutoFarmSideMissions(questType, runningFlagFn)
-    while runningFlagFn() do
-        local accepted = Lib.AcceptNearestQuest(questType)
-
-        if accepted then
-            task.wait(1) -- timp ca misiunea să apară în currentmissions
-
-            local mission = Lib.FindActiveSideMission()
-            if mission then
-                Lib.CompleteSideMission(mission, 15)
-            end
-        end
-
-        task.wait(1)
-    end
+-- Alias pentru compatibilitate (pauză implicită 0.3s)
+function Lib.CompleteSideMission(missionInstance, maxTime)
+    return Lib.CompleteSideMissionWithPause(missionInstance, maxTime, 0.3)
 end
 
 -- ============================================================
