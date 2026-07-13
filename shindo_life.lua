@@ -1,6 +1,9 @@
 local _version = "1.6.66"
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. _version .. "/main.lua"))() 
 
+-- încarcă librăria cu toate funcțiile reutilizabile
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/BURSUCo/NEXUS-HUB/refs/heads/main/lib.lua"))()
+
 -- shindo life window
 local Window = WindUI:CreateWindow({
     Title = "NexusHUB",
@@ -57,81 +60,13 @@ OWNER:Toggle({
         if state then
             task.spawn(function()
                 while autoFarmRunning do
-                    -- PAS 1: Acceptă misiunea (dacă e selectat un boss)
                     if selectedBoss then
-                        pcall(function()
-                            local missionFolder = workspace:FindFirstChild("bossdropmission")
-                            if missionFolder then
-                                local args = { LocalPlayer }
-                                missionFolder:WaitForChild("missions")
-                                    :WaitForChild(selectedBoss)
-                                    :WaitForChild("missiongiver")
-                                    :WaitForChild("CLIENTTALK")
-                                    :FireServer(unpack(args))
-                            end
-                        end)
+                        Lib.AcceptBossMission("bossdropmission", selectedBoss)
                     end
 
                     task.wait(2) -- timp pentru spawn
 
-                    -- PAS 2: cât timp mai există orice NPC (npc+număr) viu, omoară-i pe rând
-                    local anyFound = true
-                    while autoFarmRunning and anyFound do
-                        anyFound = false
-
-                        local npcFolder = workspace:FindFirstChild("npc")
-                        if npcFolder then
-                            local character = LocalPlayer.Character
-                            local root = character and character:FindFirstChild("HumanoidRootPart")
-
-                            -- găsește cel mai apropiat NPC viu
-                            local target = nil
-                            local targetDist = math.huge
-
-                            for _, child in ipairs(npcFolder:GetChildren()) do
-                                if child.Name:match("^npc%d+$") then
-                                    local hum = child:FindFirstChildOfClass("Humanoid")
-                                    local npcRoot = child:FindFirstChild("HumanoidRootPart")
-                                    if hum and hum.Health > 0 and npcRoot and root then
-                                        anyFound = true
-                                        local dist = (npcRoot.Position - root.Position).Magnitude
-                                        if dist < targetDist then
-                                            targetDist = dist
-                                            target = child
-                                        end
-                                    end
-                                end
-                            end
-
-                            if target and root then
-                                local npcRoot = target:FindFirstChild("HumanoidRootPart")
-                                local humanoid = target:FindFirstChildOfClass("Humanoid")
-
-                                -- atacă acest target până moare sau nu mai e valid
-                                while autoFarmRunning and target.Parent and humanoid.Health > 0 do
-                                    local targetPos = npcRoot.Position + Vector3.new(0, setupHeight, -setupDistance)
-                                    root.CFrame = CFrame.new(targetPos, npcRoot.Position)
-
-                                    local combatUpdate = character:FindFirstChild("combat") and character.combat:FindFirstChild("update")
-                                    local startEvent = LocalPlayer:FindFirstChild("startevent")
-
-                                    if combatUpdate and startEvent then
-                                        combatUpdate:FireServer("mouse1", true)
-                                        for j = 1, 5 do
-                                            startEvent:FireServer("target")
-                                        end
-                                        task.wait(0.05)
-                                        combatUpdate:FireServer("mouse1", false)
-                                        startEvent:FireServer("target")
-                                    end
-
-                                    task.wait(0.4)
-                                end
-                            end
-                        end
-
-                        task.wait(0.3)
-                    end
+                    Lib.KillAllMobs(setupDistance, setupHeight, function() return autoFarmRunning end)
 
                     task.wait(1) -- pauză înainte de misiunea următoare
                 end
@@ -153,7 +88,7 @@ OWNER:Dropdown({
 })
 
 OWNER:Toggle({
-    Title = "Auto Farm (Quest NPC) [DEBUG]",
+    Title = "Auto Farm (Quest NPC)",
     Value = false,
     Callback = function(state)
         questFarmRunning = state
@@ -161,79 +96,11 @@ OWNER:Toggle({
         if state then
             task.spawn(function()
                 while questFarmRunning do
-                    local character = LocalPlayer.Character
-                    local root = character and character:FindFirstChild("HumanoidRootPart")
-                    if not root then
-                        print("Character/root not found")
-                        task.wait(1)
-                        continue
-                    end
+                    local accepted = Lib.AcceptNearestQuest(selectedQuestType)
 
-                    local folder = workspace:FindFirstChild("missiongivers")
-                    if not folder then
-                        print("missiongivers folder not found")
-                        task.wait(1)
-                        continue
-                    end
-
-                    print("Total NPCs in missiongivers: " .. #folder:GetChildren())
-
-                    local closest = nil
-                    local closestDist = math.huge
-                    local eligibleCount = 0
-
-                    for _, giver in ipairs(folder:GetChildren()) do
-                        local talk = giver:FindFirstChild("Talk")
-                        local npcRoot = giver:FindFirstChild("HumanoidRootPart")
-
-                        if talk and npcRoot then
-                            local talk1 = talk:FindFirstChild("talk1")
-                            local typValue = talk:FindFirstChild("typ")
-                            local hasActiveQuest = talk1 and talk1.Value ~= ""
-                            local matchesType = selectedQuestType == "oricare"
-                                or (typValue and typValue.Value == selectedQuestType)
-
-                            if hasActiveQuest and matchesType then
-                                eligibleCount = eligibleCount + 1
-                                local dist = (npcRoot.Position - root.Position).Magnitude
-                                if dist < closestDist then
-                                    closestDist = dist
-                                    closest = giver
-                                end
-                            end
-                        end
-                    end
-
-                    print("Eligible NPCs found: " .. eligibleCount)
-
-                    if not closest then
-                        print("No closest NPC selected, waiting...")
-                        task.wait(1)
-                        continue
-                    end
-
-                    print("Closest NPC distance: " .. closestDist)
-
-                    local npcRoot = closest:FindFirstChild("HumanoidRootPart")
-                    local clientTalk = closest:WaitForChild("CLIENTTALK")
-
-                    local pinConnection
-                    pinConnection = RunService.RenderStepped:Connect(function()
-                        if npcRoot and npcRoot.Parent and root and root.Parent then
-                            root.CFrame = npcRoot.CFrame * CFrame.new(0, 0, 3)
-                        end
-                    end)
-
-                    task.wait(0.3)
-                    clientTalk:FireServer()
-                    task.wait(0.5)
-                    clientTalk:FireServer("accept")
-                    task.wait(0.5)
-                    print("Accept sequence sent")
-
-                    if pinConnection then
-                        pinConnection:Disconnect()
-                        pinConnection = nil
+                    if accepted then
+                        task.wait(2) -- timp pentru spawn mob (dacă e misiune de tip defeat)
+                        Lib.KillAllMobs(setupDistance, setupHeight, function() return questFarmRunning end)
                     end
 
                     task.wait(1)
@@ -242,6 +109,7 @@ OWNER:Toggle({
         end
     end,
 })
+
 
 -- ==================== SETUP DISTANCE ====================
 OWNER:Input({
@@ -273,37 +141,8 @@ OWNER:Toggle({
     Value = false,
     Callback = function(state)
         if state then
-            local npcFolder = workspace:FindFirstChild("npc")
-            if not npcFolder then
-                WindUI:Notify({ Title = "Error", Content = "Boss not spawned yet", Duration = 3 })
-                return
-            end
-
-            local npc = nil
-            for _, child in ipairs(npcFolder:GetChildren()) do
-                if child.Name:match("^npc%d+$") and child:FindFirstChildOfClass("Humanoid") then
-                    npc = child
-                    break
-                end
-            end
-
-            if not npc then
-                WindUI:Notify({ Title = "Error", Content = "Boss not spawned yet", Duration = 3 })
-                return
-            end
-
-            local npcRoot = npc:FindFirstChild("HumanoidRootPart")
-            local character = LocalPlayer.Character
-            if not npcRoot or not character or not character:FindFirstChild("HumanoidRootPart") then
-                return
-            end
-            local root = character.HumanoidRootPart
-
-            setupConnection = RunService.RenderStepped:Connect(function()
-                if npc and npc.Parent and root and root.Parent then
-                    local targetPos = npcRoot.Position + Vector3.new(0, setupHeight, -setupDistance)
-                    root.CFrame = CFrame.new(targetPos, npcRoot.Position)
-                end
+            setupConnection = Lib.StartSetupDistance(setupDistance, setupHeight, function(msg)
+                WindUI:Notify({ Title = "Error", Content = msg, Duration = 3 })
             end)
         else
             if setupConnection then
@@ -373,16 +212,7 @@ FarmM:Toggle({
             return
         end
 
-        local args = { LocalPlayer }
-        
-        local missionFolder = workspace:FindFirstChild("bossdropmission")
-        if missionFolder then
-            missionFolder:WaitForChild("missions")
-                :WaitForChild(selectedBoss)
-                :WaitForChild("missiongiver")
-                :WaitForChild("CLIENTTALK")
-                :FireServer(unpack(args))
-        end
+        Lib.AcceptBossMission("bossdropmission", selectedBoss)
     end,
 })
 
@@ -414,14 +244,7 @@ Tab1:Toggle({
 
         if state then
             task.spawn(function()
-                while getgenv().BloodlineSpin do
-                    for _, kg in ipairs(selectedKGs) do
-                        if not getgenv().BloodlineSpin then break end
-                        game.Players.LocalPlayer.startevent:FireServer("spin", kg)
-                        task.wait(0.5)
-                    end
-                    task.wait(1.5)
-                end
+                Lib.AutoSpinBloodline(selectedKGs, function() return getgenv().BloodlineSpin end)
             end)
         end
     end,
@@ -448,14 +271,7 @@ Tab1:Toggle({
 
         if state then
             task.spawn(function()
-                while getgenv().ElementSpin do
-                    for _, elem in ipairs(selectedElements) do
-                        if not getgenv().ElementSpin then break end
-                        game.Players.LocalPlayer.startevent:FireServer("spin", elem)
-                        task.wait(0.5)
-                    end
-                    task.wait(1.5)
-                end
+                Lib.AutoSpinElement(selectedElements, function() return getgenv().ElementSpin end)
             end)
         end
     end,
@@ -477,10 +293,6 @@ local ActiveCodes = {
 Tab2:Button({
     Title = "Redeem all codes",
     Callback = function()
-        for _, code in ipairs(ActiveCodes) do
-            local args = { "addtwitter", code }
-            game:GetService("Players").LocalPlayer:WaitForChild("startevent"):FireServer(unpack(args))
-            task.wait(0.01)
-        end
+        Lib.RedeemAllCodes(ActiveCodes, 0.01)
     end,
 })
