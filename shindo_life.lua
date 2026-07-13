@@ -21,6 +21,7 @@ local setupHeight = 0
 local setupConnection = nil
 local autoFarmRunning = false
 local questFarmRunning = false
+local selectedQuestType = "oricare"
 
 -- Pune aici UserId-urile celor cărora vrei să le dai acces (al tău + al prietenilor)
 local OwnerIds = {
@@ -46,9 +47,101 @@ local OWNER = Window:Tab({
 
 -- elements OWNER/DEVELOPERS
 
-local questFarmRunning = false
-local selectedQuestType = "oricare"
+-- ==================== AUTO FARM (BOSS) ====================
+OWNER:Toggle({
+    Title = "Auto Farm",
+    Value = false,
+    Callback = function(state)
+        autoFarmRunning = state
 
+        if state then
+            task.spawn(function()
+                while autoFarmRunning do
+                    -- PAS 1: Acceptă misiunea (dacă e selectat un boss)
+                    if selectedBoss then
+                        pcall(function()
+                            local missionFolder = workspace:FindFirstChild("bossdropmission")
+                            if missionFolder then
+                                local args = { LocalPlayer }
+                                missionFolder:WaitForChild("missions")
+                                    :WaitForChild(selectedBoss)
+                                    :WaitForChild("missiongiver")
+                                    :WaitForChild("CLIENTTALK")
+                                    :FireServer(unpack(args))
+                            end
+                        end)
+                    end
+
+                    task.wait(2) -- timp pentru spawn
+
+                    -- PAS 2: cât timp mai există orice NPC (npc+număr) viu, omoară-i pe rând
+                    local anyFound = true
+                    while autoFarmRunning and anyFound do
+                        anyFound = false
+
+                        local npcFolder = workspace:FindFirstChild("npc")
+                        if npcFolder then
+                            local character = LocalPlayer.Character
+                            local root = character and character:FindFirstChild("HumanoidRootPart")
+
+                            -- găsește cel mai apropiat NPC viu
+                            local target = nil
+                            local targetDist = math.huge
+
+                            for _, child in ipairs(npcFolder:GetChildren()) do
+                                if child.Name:match("^npc%d+$") then
+                                    local hum = child:FindFirstChildOfClass("Humanoid")
+                                    local npcRoot = child:FindFirstChild("HumanoidRootPart")
+                                    if hum and hum.Health > 0 and npcRoot and root then
+                                        anyFound = true
+                                        local dist = (npcRoot.Position - root.Position).Magnitude
+                                        if dist < targetDist then
+                                            targetDist = dist
+                                            target = child
+                                        end
+                                    end
+                                end
+                            end
+
+                            if target and root then
+                                local npcRoot = target:FindFirstChild("HumanoidRootPart")
+                                local humanoid = target:FindFirstChildOfClass("Humanoid")
+
+                                -- atacă acest target până moare sau nu mai e valid
+                                while autoFarmRunning and target.Parent and humanoid.Health > 0 do
+                                    local targetPos = npcRoot.Position + Vector3.new(0, setupHeight, -setupDistance)
+                                    root.CFrame = CFrame.new(targetPos, npcRoot.Position)
+
+                                    local combatUpdate = character:FindFirstChild("combat") and character.combat:FindFirstChild("update")
+                                    local startEvent = LocalPlayer:FindFirstChild("startevent")
+
+                                    if combatUpdate and startEvent then
+                                        combatUpdate:FireServer("mouse1", true)
+                                        for j = 1, 5 do
+                                            startEvent:FireServer("target")
+                                        end
+                                        task.wait(0.05)
+                                        combatUpdate:FireServer("mouse1", false)
+                                        startEvent:FireServer("target")
+                                    end
+
+                                    task.wait(0.4)
+                                end
+                            end
+                        end
+
+                        task.wait(0.3)
+                    end
+
+                    task.wait(1) -- pauză înainte de misiunea următoare
+                end
+            end)
+        end
+    end,
+})
+
+
+-- ==================== AUTO FARM (QUEST NPC) ====================
 OWNER:Dropdown({
     Title = "Tip misiune (Quest NPC)",
     Values = {"oricare", "defeat", "envelope", "grocerybag", "weeds", "dirt", "cat", "graffiti"},
