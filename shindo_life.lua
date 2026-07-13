@@ -153,7 +153,7 @@ OWNER:Dropdown({
 })
 
 OWNER:Toggle({
-    Title = "Auto Farm (Quest NPC)",
+    Title = "Auto Farm (Quest NPC) [DEBUG]",
     Value = false,
     Callback = function(state)
         questFarmRunning = state
@@ -164,18 +164,23 @@ OWNER:Toggle({
                     local character = LocalPlayer.Character
                     local root = character and character:FindFirstChild("HumanoidRootPart")
                     if not root then
+                        print("Character/root not found")
                         task.wait(1)
                         continue
                     end
 
                     local folder = workspace:FindFirstChild("missiongivers")
                     if not folder then
+                        print("missiongivers folder not found")
                         task.wait(1)
                         continue
                     end
 
+                    print("Total NPCs in missiongivers: " .. #folder:GetChildren())
+
                     local closest = nil
                     local closestDist = math.huge
+                    local eligibleCount = 0
 
                     for _, giver in ipairs(folder:GetChildren()) do
                         local talk = giver:FindFirstChild("Talk")
@@ -184,14 +189,12 @@ OWNER:Toggle({
                         if talk and npcRoot then
                             local talk1 = talk:FindFirstChild("talk1")
                             local typValue = talk:FindFirstChild("typ")
-
-                            -- eligibil DOAR dacă talk1 are text real (nu e gol)
                             local hasActiveQuest = talk1 and talk1.Value ~= ""
-
                             local matchesType = selectedQuestType == "oricare"
                                 or (typValue and typValue.Value == selectedQuestType)
 
                             if hasActiveQuest and matchesType then
+                                eligibleCount = eligibleCount + 1
                                 local dist = (npcRoot.Position - root.Position).Magnitude
                                 if dist < closestDist then
                                     closestDist = dist
@@ -201,10 +204,15 @@ OWNER:Toggle({
                         end
                     end
 
+                    print("Eligible NPCs found: " .. eligibleCount)
+
                     if not closest then
+                        print("No closest NPC selected, waiting...")
                         task.wait(1)
                         continue
                     end
+
+                    print("Closest NPC distance: " .. closestDist)
 
                     local npcRoot = closest:FindFirstChild("HumanoidRootPart")
                     local clientTalk = closest:WaitForChild("CLIENTTALK")
@@ -221,6 +229,7 @@ OWNER:Toggle({
                     task.wait(0.5)
                     clientTalk:FireServer("accept")
                     task.wait(0.5)
+                    print("Accept sequence sent")
 
                     if pinConnection then
                         pinConnection:Disconnect()
@@ -233,7 +242,6 @@ OWNER:Toggle({
         end
     end,
 })
-
 
 -- ==================== SETUP DISTANCE ====================
 OWNER:Input({
