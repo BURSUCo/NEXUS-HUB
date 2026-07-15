@@ -108,7 +108,7 @@ function Library:CreateWindow(config)
     -- Main frame
     local main = create("Frame", {
         Name = "Main",
-        Size = UDim2.fromOffset(1000, 620),
+        Size = UDim2.fromOffset(500, 310),
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = self.Theme.Background,
